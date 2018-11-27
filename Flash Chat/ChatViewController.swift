@@ -106,7 +106,7 @@ class ChatViewController: UIViewController {
     
     @IBAction func logOutPressed(_ sender: AnyObject) {
         
-        //TODO: Log out the user and send them back to WelcomeViewController
+        //MARK: - Log out the user
         do {
            try Auth.auth().signOut()
             navigationController?.popToRootViewController(animated: true)
