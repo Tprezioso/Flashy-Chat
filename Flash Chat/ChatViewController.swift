@@ -12,15 +12,13 @@ import Firebase
 class ChatViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
     // Declare instance variables here
-
+    var messageArray : [Message] = [Message]()
     
     // We've pre-linked the IBOutlets
     @IBOutlet var heightConstraint: NSLayoutConstraint!
     @IBOutlet var sendButton: UIButton!
     @IBOutlet var messageTextfield: UITextField!
     @IBOutlet var messageTableView: UITableView!
-    
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,6 +41,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         //TODO: Register your MessageCell.xib file here:
         messageTableView.register(UINib(nibName: "MessageCell", bundle: nil), forCellReuseIdentifier: "customMessageCell")
         configureTableView()
+        retrieveMessages()
     }
 
     ///////////////////////////////////////////
@@ -55,8 +54,9 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "customMessageCell", for: indexPath) as! CustomMessageCell
         
-        let messageArray = ["First","Second","Third"]
-         cell.messageBody.text = messageArray[indexPath.row]
+        cell.messageBody.text = messageArray[indexPath.row].messageBody
+        cell.senderUsername.text = messageArray[indexPath.row].sender
+        cell.avatarImageView.image = UIImage(named: "egg")
         
         return cell
     }
@@ -64,12 +64,12 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     //TODO: Declare numberOfRowsInSection here:
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 3
+        return messageArray.count
     }
     
     
     //TODO: Declare tableViewTapped here:
-    func tableViewTapped() {
+    @objc func tableViewTapped() {
         messageTextfield.endEditing(true)
     }
     
@@ -127,7 +127,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         messageTextfield.isEnabled = false
         sendButton.isEnabled = false
         
-        let messagesDB = Database.database().reference().child("Messagess")
+        let messagesDB = Database.database().reference().child("Messages")
         
         let messageDictionary = ["Sender" : Auth.auth().currentUser?.email,
                                  "MessageBody" :messageTextfield.text!]
@@ -149,7 +149,24 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     //TODO: Create the retrieveMessages method here:
     
-    
+    func retrieveMessages() {
+        let messageDB = Database.database().reference().child("Messages")
+        
+        messageDB.observe(.childAdded) { (snapshot) in
+            let snapsshotValue = snapshot.value as! Dictionary<String, String>
+            
+            let text = snapsshotValue["MessageBody"]!
+            let sender = snapsshotValue["Sender"]!
+
+            let message = Message()
+            message.sender = sender
+            message.messageBody = text
+            self.messageArray.append(message)
+            
+            self.configureTableView()
+            self.messageTableView.reloadData()
+        }
+    }
 
     
     
@@ -165,7 +182,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
             print("error signing out")
         }
     }
-    
 
 
 }
